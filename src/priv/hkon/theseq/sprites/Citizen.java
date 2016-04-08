@@ -1,9 +1,13 @@
 package priv.hkon.theseq.sprites;
 
+import priv.hkon.theseq.misc.Notification;
 import priv.hkon.theseq.world.Village;
 
 public abstract class Citizen extends Movable{
 	
+	private static final long serialVersionUID = -3959549715640637561L;
+
+
 	int citizenNumber;
 	
 
@@ -22,8 +26,11 @@ public abstract class Citizen extends Movable{
 	}
 	
 	public void calledUpon(Sprite caller, int importance){
-		this.caller = caller;
-		this.callImportance = importance;
-		isCalledUpon = true;
+		receiveNotification(new Notification(Notification.TYPE_INVITATION_TO_CONVERSATION,
+				importance, caller));
+	}
+	
+	public void receiveNotification(Notification n){
+		receivedNotifications.add(n);
 	}
 }

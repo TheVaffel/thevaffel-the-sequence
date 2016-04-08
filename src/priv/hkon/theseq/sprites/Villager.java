@@ -1,15 +1,25 @@
 package priv.hkon.theseq.sprites;
 
-import priv.hkon.theseq.world.House;
+import java.util.Arrays;
+
+import priv.hkon.theseq.misc.Conversation;
+import priv.hkon.theseq.misc.Notification;
+import priv.hkon.theseq.misc.Sentence;
+import priv.hkon.theseq.misc.VillageEvent;
+import priv.hkon.theseq.structures.Bed;
+import priv.hkon.theseq.structures.House;
 import priv.hkon.theseq.world.Village;
 
-public class Villager extends Citizen{
+public abstract class Villager extends Citizen{
 	
+	private static final long serialVersionUID = 6040911560799224747L;
 	House home;
 	int timeSinceHome;
 	int citizenNumber;
 
 	int timeToWait= 0;
+	
+	VillageEvent currEvent;
 	
 	public static final int HEAD_OFFSET_Y = 5;
 	public static final int HEAD_OFFSET_X = W/2;
@@ -21,21 +31,39 @@ public class Villager extends Citizen{
 	int targetMode;
 	int modeImportance;
 	Sprite targetSprite;
+	int modeTargetX;
+	int modeTargetY;
+	
+	public Sprite lastVictim;
+	
+	int dayCycleShift;
 	
 	boolean hasPausedMode = false;
 	int pausedMode;
 	int timePaused = 0;
 	int pausedModeImportance;
+	int pausedModeTargetX;
+	int pausedModeTargetY;
 	Sprite pausedSprite;
 	
 	boolean hasCalled = false;
 	
+	public boolean presenting = false;
+	public boolean didPresent = false;
+	
+	static int[][][] fovDeltaCoordinates;
+	
 	float[] affections; //Numbers from -1 to 1 which tells how much this citizen likes the others.
 	
 	public static final int CONDITION_ANGER = 0;
-	public static final int CONDITION_FEAR = 1;
+	public static final int CONDITION_FEAR = 1;//NB: Assumes that conditions are negative in getSelfConditionInt()
 	
 	float[] conditions = new float[]{0.0f, 0.0f};
+	public static final String[] CONDITION_STRINGS = {
+			"angry", "afraid"
+	};
+	
+	public int nextMode = -1;
 	
 	public static final int MODE_RELAX_AT_HOME = 0;
 	public static final int MODE_CHASE_OUT_OF_HOUSE = 1;
@@ -43,27 +71,37 @@ public class Villager extends Citizen{
 	public static final int MODE_CURIOUS = 3;
 	public static final int MODE_TALKING = 4;
 	public static final int MODE_WORKING = 5;
+	public static final int MODE_FLEEING = 6;
+	public static final int MODE_THINKING = 7;
+	public static final int MODE_RELAXING = 8;
+	public static final int MODE_SLEEPING = 9;
+	public static final int MODE_SPEAKING_TO_PLAYER = 10;
+	public static final int MODE_WAITING_FOR_EVENT = 11;
 	
 	public static final int IMPORTANT_NOT = 0;
 	public static final int IMPORTANT_LITTLE = 1;
 	public static final int IMPORTANT_MEDIUM  = 2;
 	public static final int IMPORTANT_VERY = 3;
 	
+	public static final int SPEECH_PRESENTING = 10000;
+	
 	public static final String[][] DIALOG_STRINGS = {{"Dum di dum di dum", "La la-laaah lah!"}, 
 			{"Hey, get out!", "You're not welcome here!", "Eyh, you should leave now"},
 			{"Hey...", "What the...","Uhm..","!!"},
-			{"Hum?", "?", "!"}
+			{"Hum?", "?", "!"},
+			{},
+			{},
+			{},
+			{"Hmmmm....", "Maybe...", "Erm.. What about.."},
+			{"Life is good..."},
+			{"Zzz"},
+			{},
+			{}
 	};
 	
-	public static final int QUESTION_SELF_CONDITION = 0;
-	public static final int QUESTION_RELATION_TO_ASKER = 1;
-	public static final int QUESTION_MEANING_OF_LIFE = 2;
+	int modeParameter; //For various use, depending on mode
 	
-	public static final String[][] GENERAL_QUESTIONS = {
-			{"How are you?", "How is your life by now?", "Are you having a good time?"},
-			{"Honestly, what do you think of me?", "How am I in your eyes?" , "If you were to choose between a night with me or a day with Hitler, what would you do?"},
-			{"What is the meaning of our existence anyway?", "Is there more out there, or is this village all the world has got?", "WHY ARE WE HERE?"}
-	};
+	//TODO: Make woodcutter, with his own woodcutter-cabin
 	
 	public int expectingVisit = -1;
 	public boolean expectingSeveralVisits = false;
@@ -71,8 +109,6 @@ public class Villager extends Citizen{
 	int coatColor = Sprite.getColor(40, 60, 80);
 	
 	public static final int HEAD_SQ_RADIUS = W*W/9 - 1;
-	
-	//TODO: add some personality!
 
 	public Villager(int x, int y, Village v, House h, int i) {
 		super(x, y, v, i);
@@ -81,6 +117,14 @@ public class Villager extends Citizen{
 		for(int j = 0; j < affections.length; j++){
 			affections[j] = .0f + RAND.nextFloat()*.20f;
 		}
+		targetMode = MODE_RELAXING;
+		dayCycleShift = RAND.nextInt(60*60);
+		
+		//System.out.println("Made Villager at " + x + " " + y);
+	}
+	
+	public House getHome(){
+		return home;
 	}
 
 	@Override
@@ -112,37 +156,54 @@ public class Villager extends Citizen{
 	}
 	
 	public boolean tick(){
+		data = animationFrames[movingDirection][0];
 		if(!isInsideHome()){
 			timeSinceHome++;
+		}
+		if(hasPausedMode){
+			timePaused++;
 		}
 		if(timeToWait >0){
 			timeToWait--;
 			return false;
 		}
 		
+		if(super.tick()){
+			return true;
+		}
 		
 		
-		data = animationFrames[movingDirection][0];
+		while(!receivedNotifications.isEmpty()){
+			if(reactToNotification(receivedNotifications.poll())){
+				return true;
+			}
+		}
 		
-		if(conversation != null&& targetMode != MODE_TALKING){
+		if(conversation != null&& targetMode != MODE_TALKING && targetMode != MODE_SPEAKING_TO_PLAYER){
 			pauseMode();
 			targetMode = MODE_TALKING;
-			targetSprite = conversation.getOwner();
+			if(conversation.getOwner() != this){
+				targetSprite = conversation.getOwner();
+			}else{
+				targetSprite = conversation.getPartner();
+			}
 			hasPath = false;
 		}
 
-		if(hasPausedMode){
-			timePaused++;
-		}
-		
 		switch(targetMode){
 			case MODE_RELAX_AT_HOME: 
 				if(!isInsideHome()){
-					if(hasPath&&home.isClosedAtGlobal(targetX, targetY))
+					if(hasPath&&home.isClosedAtGlobal(pathTargetX, pathTargetY))
 						break;
 					startGoHome();
 				}else{
 					relaxAtHome();
+				}
+				if(isBedTime()){
+					goToBed();
+				}
+				if(isWorkTime()){
+					setMode(MODE_WORKING, IMPORTANT_MEDIUM, null);
 				}
 				break;
 			case MODE_CHASE_OUT_OF_HOUSE: 
@@ -155,22 +216,221 @@ public class Villager extends Citizen{
 				break;
 			case MODE_WORKING:
 				work();
+				if(!isWorkTime()){
+					setMode(MODE_RELAXING, IMPORTANT_NOT, null);
+				}
+				if(isBedTime()){
+					goToBed();
+				}
 				break;
+			case MODE_FLEEING:
+				if(distTo(targetSprite) > RANGE_OF_VIEW*1.5){
+					if(hasPausedMode){
+						revertPausedMode();
+					}else{
+						runAway();
+					}
+				}break;
+			case MODE_RELAXING: {
+				
+				relax();
+				
+				break;
+			}
+			
+			case MODE_SLEEPING: {
+				sleep();
+				break;
+			}
+			
+			case MODE_SPEAKING_TO_PLAYER: {
+				speakToPlayer();
+				break;
+			}
+			
+			case MODE_WAITING_FOR_EVENT: {
+				if(currEvent == null){
+					if( hasPausedMode){
+						revertPausedMode();
+					}else{
+						setMode(MODE_RELAXING, IMPORTANT_NOT, null);
+					}
+				}
+				if(currEvent.isHappening()){
+					processEvent(currEvent);
+				}
+				break;
+			}
 		}
-		if(super.tick()){
+		
+		return false;
+	}
+	
+	public void relax(){
+		
+		if(isBedTime()){
+			goToBed();
+			return;
+		}
+		if(isWorkTime()){
+			setMode(MODE_WORKING, IMPORTANT_MEDIUM, null);
+		}
+
+		Citizen c;
+		if((c = findCitizen()) != null && c != lastVictim && c.getConversation() == null
+				&& !((c instanceof Villager &&((Villager)c).getMode() == MODE_TALKING)
+						|| (! (c instanceof Player) && RAND.nextInt(20)> 0))){
+			
+			hasPath = false;
+			targetSprite = c;
+			lastVictim = c;
+			
+			engageConversation(c, IMPORTANT_VERY);
+		}else if(!hasPath){
+			strollTownGrid();
+		}
+	}
+	
+	boolean reactToNotification(Notification n){
+		if(n.getType() == Notification.TYPE_INVITATION_TO_CONVERSATION){
+			if(n.getCreator() instanceof Citizen && affections[((Citizen)(n.getCreator())).getCitizenNumber()] * n.getImportance() > modeImportance){
+				if(targetMode != MODE_RELAX_AT_HOME){
+					pauseMode();
+				}
+				targetMode = MODE_TALKING;
+				targetSprite = conversation.getOwner();
+				lastVictim = conversation.getOwner();
+				hasPath = false;
+				return true;
+			}else{
+				return false;
+			}
+		}else if(n.getType() == Notification.TYPE_UNFRIENDLY){
+			pauseMode();
+			targetMode = MODE_FLEEING;
+			targetSprite = n.getCreator();
+			hasPath = false;
 			return true;
 		}
 		return false;
 	}
 	
-	void openRandomConversation(){
-		//TODO: make this some general conversation starter
+	boolean hasPausedPath = false;
+	
+	public void speakToPlayer(){
+		if(sentence.isEmpty() && !showDialog && !hasPath){
+			speechFinished();
+			return;
+		}
+		if(distTo(village.getPlayer())> 14){
+			speechInterrupted();
+			return;
+		}else if(distTo(village.getPlayer())> 6){
+			if(hasPath){
+				if(distBetween(getX() + dx[movingDirection], getY() + dy[movingDirection], 
+						village.getPlayer().getX(), village.getPlayer().getY())
+						< distTo(village.getPlayer())){
+					//...
+				}else{
+					hasPausedPath = true;
+					hasPath = false;
+					turnTowards(getDirectionTo(village.getPlayer()));
+				}
+			}else{
+				turnTowards(getDirectionTo(village.getPlayer()));
+			}
+		
+		}else{
+			if(hasPausedPath){
+				hasPath = true;
+				hasPausedPath = false;
+			}
+			if(!hasPath){
+				turnTowards(getDirectionTo(village.getPlayer()));
+			}
+		}
+	}
+	
+	public void speechInterrupted(){
+		sentence.clear();
+		if(subclassSpeechInterrupted()){
+			return;
+		}
+		
+		hasPath = false;
+		if(nextMode != -1){
+			targetMode = nextMode;
+			nextMode = -1;
+		}else if(hasPausedMode){
+			revertPausedMode();
+		}else{
+			setMode(MODE_RELAXING, IMPORTANT_NOT, null);
+		}
+		showDialog("Oh.. We'll talk later, then", 120);
+	}
+	
+	public void speechFinished(){
+		if(conversation != null){
+			conversation.disconnect(this);
+		}
+		if(subclassSpeechFinished()){
+			return;
+		}
+		
+		if(hasPausedMode && pausedMode == MODE_TALKING){
+			hasPausedMode = false;
+		}
+		
+		conversation = null;
+		//System.out.println("SpeechFinished");
+		
+		if(nextMode != -1){
+			//System.out.println("Next mode sat");
+			targetMode = nextMode;
+			nextMode = -1;
+			return;
+		}else if(hasPausedMode){
+			revertPausedMode();
+			
+		}else{
+			setMode(MODE_RELAXING, IMPORTANT_NOT, null);
+		}
+		lastVictim = village.getPlayer();
+		showDialog(Sentence.getRandomString(Sentence.TYPE_GOODBYE, Sentence.GOODBYE_NEUTRAL) , 120);
+	}
+	
+	boolean isBedTime(){
+		return (village.getTime() - dayCycleShift)%Village.DAYCYCLE_DURATION > 2*Village.DAYCYCLE_DURATION/3;
+	}
+	
+	boolean isWorkTime(){
+		return (village.getTime() - dayCycleShift)%Village.DAYCYCLE_DURATION <Village.DAYCYCLE_DURATION/3;
+	}
+	
+	void runAway(){
+		int i = 0;
+		if(hasPath){
+			return;
+		}
+		while(village.ownedBy(getX(), getY() + 2 + i) != null){
+			i++;
+		}
+		startPathTo(getX(), getY() + 2 + i);
 	}
 	
 	void askQuestion(int r){
-		sentence.add(GENERAL_QUESTIONS[r][RAND.nextInt(GENERAL_QUESTIONS[r].length)]);
+		currSentence = new Sentence(conversation.getOther(this), Sentence.TYPE_QUESTION, r, this);
+		saySentence(currSentence);
+	}
+	
+	void saySentence(Sentence s){
+		currSentence = s;
+		String[] sent = currSentence.getStrings();
+		for(int i = 0; i < sent.length; i++){
+			sentence.add(sent[i]);
+		}
 		setDialogString(sentence.poll());
-		showDialog(3*60);
+		showDialog(2*60);
 	}
 	
 	public void processConversation(){
@@ -195,8 +455,6 @@ public class Villager extends Citizen{
 	}
 	
 	void disconnectFromTalk(){
-		setDialogString("Yeah, yeah...");
-		showDialog(2*60);
 		conversation.disconnect(this);
 		conversation = null;
 		if(hasPausedMode){
@@ -212,12 +470,16 @@ public class Villager extends Citizen{
 		targetSprite = pausedSprite;
 		timePaused = 0;
 		modeImportance = pausedModeImportance;
+		modeTargetX = pausedModeTargetX;
+		modeTargetY = pausedModeTargetY;
 	}
 	
 	void pauseMode(){
 		hasPausedMode = true;
 		pausedMode = targetMode;
 		pausedSprite = targetSprite;
+		pausedModeTargetX = modeTargetX;
+		pausedModeTargetY = modeTargetY;
 		timePaused = 0;
 		targetSprite = null;
 		pausedModeImportance = modeImportance;
@@ -231,7 +493,7 @@ public class Villager extends Citizen{
 			conditions[CONDITION_FEAR] += 0.1;
 		}
 	}
-	
+	Citizen intruder;
 	void relaxAtHome(){
 		if(timeSinceHome > 60*3){
 			setDialogString("Aah, finally home!");
@@ -240,15 +502,17 @@ public class Villager extends Citizen{
 		timeSinceHome = 0;
 		
 		if(!expectingSeveralVisits){
-			Citizen c;
 			
-			if((c = findIntruder()) != null){
+			
+			if((intruder = findIntruder()) != null){
+				intruder.receiveNotification(new Notification(Notification.TYPE_UNFRIENDLY,
+						IMPORTANT_MEDIUM, this));
 				targetMode = MODE_CHASE_OUT_OF_HOUSE;
 				timeToWait = 30;
 				setDialogString(getRandomDialogString(MODE_SURPRISED));
 				
 				showDialog(30);
-				targetSprite = c;
+				targetSprite = intruder;
 			}else if(!showDialog){
 				if(RAND.nextInt(60*60) == 0){
 					setDialogString(getRandomDialogString(MODE_RELAX_AT_HOME));
@@ -263,6 +527,50 @@ public class Villager extends Citizen{
 				tryStartMoving(n);
 			}
 		}
+	}
+	
+	public void goToBed(){
+		targetMode = MODE_SLEEPING;
+		targetSprite = home.getBed().getBlockAt(0, 1);
+		startPathTo(home.getBed().getX(), home.getBed().getY() + 1);
+	}
+	
+	public void sleep(){//Needs some serious debugging
+		if(moving){
+			return;
+		}
+		if(hasPath && (village.getNonBlockAt(pathTargetX, pathTargetY) == null || !(village.getNonBlockAt(pathTargetX, pathTargetY).getStructure() instanceof Bed))){
+			goToBed();
+			return;
+		}
+		if(!hasPath&&(village.getNonBlockAt(x, y) == null ||!(village.getNonBlockAt(x, y).getStructure() instanceof Bed))){
+			goToBed();
+			return;
+		}
+		
+		//The villager is in bed
+		
+		movingDirection = UP;
+		
+		if(Sprite.RAND.nextInt(2000) == 0){
+			setDialogString(getRandomDialog(MODE_SLEEPING));
+			showDialog(60*2);
+		}
+		
+		if(!isBedTime()){
+			wakeUp();
+			targetMode = MODE_RELAXING;
+			targetSprite = null;
+		}
+	}
+	
+	public void wakeUp(){
+		movingDirection = DOWN;
+		timeToWait = 60*1;
+	}
+	
+	public String getRandomDialog(int g){
+		return DIALOG_STRINGS[g][RAND.nextInt(DIALOG_STRINGS[g].length)];
 	}
 	
 	public void chaseOut(){
@@ -285,12 +593,6 @@ public class Villager extends Citizen{
 		return DIALOG_STRINGS[mode][RAND.nextInt(DIALOG_STRINGS[mode].length)];
 	}
 	
-	
-	
-	boolean tryStepTowards(int nx, int ny){
-		return tryStartMoving(getDirectionTo(nx, ny));
-	}
-	
 	void chase(Sprite s){
 		tryStepTowards(s.getX(), s.getY());
 	}
@@ -302,6 +604,18 @@ public class Villager extends Citizen{
 	public void startGoHome(){
 		
 		startPathTo(home.getX()+ home.getW()/2, home.getY() + home.getH()/2);
+	}
+	
+	public void setMode(int m, int i, Sprite s){
+		targetMode = m;
+		modeImportance = i;
+		targetSprite = s;
+	}
+	
+	public void setMode(int m, int i, Sprite s, int x, int y){
+		setMode(m, i , s);
+		modeTargetX = x;
+		modeTargetY = y;
 	}
 	
 	public void makeAnimationFrames(){
@@ -388,16 +702,18 @@ public class Villager extends Citizen{
 		return null;
 	}
 	
+	Citizen guest;
+	
 	public Citizen findIntruder(){
-		Citizen c;
+		
 		for(int i = 1; i < RANGE_OF_VIEW; i++){
 			for(int j = (int)(-TAN_FOV*i + 1); j <TAN_FOV*i ;j++){
 				if(village.getSpriteAt(x + dx[movingDirection]*i + dx[(movingDirection+1)%4]*j,
 						y + dy[movingDirection]*i + dy[(movingDirection+1)%4]*j) instanceof Citizen){
-					c = (Citizen)village.getSpriteAt(x + dx[movingDirection]*i + dx[(movingDirection+1)%4]*j,
+					guest = (Citizen)village.getSpriteAt(x + dx[movingDirection]*i + dx[(movingDirection+1)%4]*j,
 							y + dy[movingDirection]*i + dy[(movingDirection+1)%4]*j);
-					if(expectingVisit != c.getCitizenNumber()&& village.isOwnedBy(c.getX(), c.getY(), village.ownedBy(x, y))){
-						return c;
+					if(expectingVisit != guest.getCitizenNumber()&& village.isOwnedBy(guest.getX(), guest.getY(), village.ownedBy(x, y))){
+						return guest;
 					}
 				}
 			}
@@ -409,9 +725,9 @@ public class Villager extends Citizen{
 					continue;
 				if(village.getSpriteAt(x + i,
 						y + j) instanceof Citizen){
-					c = (Citizen)village.getSpriteAt(x + i, y + j);
-					if(c != this&& expectingVisit != c.getCitizenNumber()&& village.isOwnedBy(c.getX(), c.getY(), village.ownedBy(x, y))){
-						return c;
+					guest = (Citizen)village.getSpriteAt(x + i, y + j);
+					if(guest != this&& expectingVisit != guest.getCitizenNumber()&& village.isOwnedBy(guest.getX(), guest.getY(), village.ownedBy(x, y))){
+						return guest;
 					}
 				}
 			}
@@ -422,7 +738,10 @@ public class Villager extends Citizen{
 	
 	
 	protected void work(){
-		
+		relax();
+		/*if(!hasPath){
+			strollTownGrid();
+		}*/
 	}
 	
 	protected boolean importantEnough(Conversation c){
@@ -434,18 +753,236 @@ public class Villager extends Citizen{
 	}
 	
 	public void talk(){
-		if(conversation.getOwner() == this){
-			askQuestion(0);
+		/*if(conversation.getOwner() == this){
+			askQuestion(RAND.nextInt(Sentence.QUESTIONS.length));
 		}else{
+			
+			
 			disconnectFromTalk();
+		}*/
+		
+		if(conversation == null){
+			return;
+		}
+		int id = RAND.nextInt(village.getNumCitizens());
+		while(id == this.citizenNumber || (conversation.getOther(this) instanceof Citizen && id == ((Citizen)(conversation.getOther(this))).getCitizenNumber())){
+			id = (id + 1)% village.getNumCitizens();
+		}
+		
+		if(conversation.getOther(this) instanceof Player && !classHasPresented()){
+			setToSpeakMode(getPresentation(), getPresentationDurations(), SPEECH_PRESENTING);
+			return;
+		}
+		
+		if(conversation.getLastSentence() == null){
+			saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_GREETING, Sentence.GREETING_NEUTRAL, this));
+		}else{
+			float aff;
+			if(conversation.getOther(this) instanceof Citizen){
+				aff = affections[((Citizen)(conversation.getOther(this))).getCitizenNumber()];
+			}else{
+				aff = 0;
+			}
+			int type = conversation.getLastSentence().getType();
+			
+			if(conversation.getOther(this) instanceof Player){
+				//System.out.println("Talking to Player");
+				if(type == Sentence.TYPE_GREETING){
+					if(RAND.nextInt(5) == 0 || !(this instanceof Nobody)){
+						saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_QUESTION, this, village.getCitizen(id)));
+					}else{
+						saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_RUMOR_INTRODUCTION, this));
+					}
+				}else if(type == Sentence.TYPE_RUMOR_INTRODUCTION){
+					saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_RUMORS,0, Sentence.GENERAL_RUMORS[RAND.nextInt(Sentence.GENERAL_RUMORS.length)],this));
+				}else
+				if(type == Sentence.TYPE_EMPTY){
+					saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_PLAYER_NOT_TALKATIVE, Math.min(Math.max((int)(aff + 1), 0), 2), this));
+				}else if(type == Sentence.TYPE_PLAYER_NOT_TALKATIVE || type == Sentence.TYPE_RUMORS){
+					saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_GOODBYE, Math.min(Math.max((int)(aff + 1), 0), 2), this));
+					disconnectFromTalk();
+				}else{
+					saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_EMPTY, this));
+				}
+				return;
+			}
+			
+			if(conversation.getSentenceCount() == 1&& !(conversation.getOther(this) instanceof Player)){
+				saySentence(new Sentence(conversation.getOther(this),Sentence.TYPE_GREETING, Sentence.GREETING_NEUTRAL, this));
+				return;
+			}else if(type == Sentence.TYPE_GREETING){
+				saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_QUESTION, this, village.getCitizen(id)));
+				return;
+			}else if(type == Sentence.TYPE_QUESTION){
+				saySentence(getAnswer(conversation.getLastSentence().getArg2()));
+				return;
+			}else if(type == Sentence.TYPE_CUSTOM_ANSWER){
+				saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_RESPONSE, Math.min(Math.max((int)(2*Sentence.meaningWeight[conversation.getLastSentence().getArg2()]*aff) + 1, 0), 2), this));
+				return;
+			}else if(type == Sentence.TYPE_GOODBYE ){
+				saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_GOODBYE, Math.min(Math.max((int)(aff + 1), 0), 2), this));
+				disconnectFromTalk();
+				return;
+			}else{
+				saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_GOODBYE, Math.min(Math.max((int)(aff + 1), 0), 2), this));
+				return;
+			}
+			//disconnectFromTalk();
 		}
 	}
 	
+	Sentence getAnswer(int type){
+		switch(type){
+		case Sentence.QUESTION_MEANING_OF_LIFE: 
+			return new Sentence(conversation.getOther(this), Sentence.TYPE_CUSTOM_ANSWER, Sentence.CUSTOM_ANSWER_NEUTRAL, getMeaningOfLife(), this);
+		case Sentence.QUESTION_RELATION_TO:
+			return new Sentence(conversation.getOther(this), Sentence.TYPE_CUSTOM_ANSWER, getRelationToInt(conversation.getLastSentence().getTopic()), new String[] {getRelationToString(conversation.getLastSentence().getTopic())}, this);
+		case Sentence.QUESTION_SELF_CONDITION:
+			return new Sentence(conversation.getOther(this), Sentence.TYPE_CUSTOM_ANSWER, getOwnConditionInt(), new String[]{getOwnConditionString()}, this, this);
+		}
+		return new Sentence(conversation.getOther(this), Sentence.TYPE_CUSTOM_ANSWER, Sentence.CUSTOM_ANSWER_NEUTRAL, new String[]{"..."}, this);
+	}
+	
+	public String getRelationToString(Sprite s){
+		if( s instanceof Citizen){
+			float aff = affections[((Citizen)s).getCitizenNumber()];
+			if( Math.abs(aff) < 0.4){
+				return "Ok, I guess";
+			}
+			if(aff < 0){
+				return "Em " + Sentence.VERBS[RAND.nextInt(Sentence.VERBS.length)] + " like "
+						+Sentence.ADJECTIVES[Sentence.ADJECTIVES_NEGATIVE][RAND.nextInt(Sentence.ADJECTIVES[Sentence.ADJECTIVES_NEGATIVE].length)] + 
+						" " + Sentence.NOUNS[Sentence.NOUN_NEGATIVE][RAND.nextInt(Sentence.NOUNS[Sentence.NOUN_NEGATIVE].length)];
+			}else{
+				return "Em " + Sentence.VERBS[RAND.nextInt(Sentence.VERBS.length)] + " like "
+						+Sentence.ADJECTIVES[Sentence.ADJECTIVES_POSITIVE][RAND.nextInt(Sentence.ADJECTIVES[Sentence.ADJECTIVES_POSITIVE].length)] + 
+						" " + Sentence.NOUNS[Sentence.NOUN_POSITIVE][RAND.nextInt(Sentence.NOUNS[Sentence.NOUN_POSITIVE].length)];
+			}
+		}else{
+			return "Ok... I guess?";
+		}
+	}
+	
+	public int getRelationToInt(Sprite s){
+		if( s instanceof Citizen){
+			float aff = affections[((Citizen)s).getCitizenNumber()];
+			if( Math.abs(aff) < 0.4){
+				return Sentence.CUSTOM_ANSWER_NEUTRAL;
+			}
+			if(aff < 0){
+				return Sentence.CUSTOM_ANSWER_NEGATIVE;
+				
+			}else{
+				return Sentence.CUSTOM_ANSWER_POSITIVE;
+			}
+		}else{
+			return Sentence.CUSTOM_ANSWER_NEUTRAL;
+		}
+	}
+	
+	public String getOwnConditionString(){
+		for(int i = 0; i < conditions.length; i++){
+			if(conditions[i] > 0.7){
+				return "I am actually kinda " + CONDITION_STRINGS + " now";
+			}
+		}
+		
+		return "I am totally fine";
+	}
+	
+	public int getOwnConditionInt(){
+		for(int i = 0; i < conditions.length; i++){
+			if(conditions[i] > 0.7){
+				return Sentence.CUSTOM_ANSWER_NEGATIVE;
+			}
+		}
+		
+		return Sentence.CUSTOM_ANSWER_NEUTRAL;
+		
+		
+	}
+	
+	public abstract String[] getMeaningOfLife();
+	
 	public void deniedConversation(){
+		conversation.finished = true;
 		conversation = null;
 		setDialogString("Oh... Ok, then...");
 		showDialog(60*2);
 		revertPausedMode();
 	}
+	
+	public static void init(){
+		int count = 0;
+		fovDeltaCoordinates = new int[4][24][2];//Yeah, mystical constant, right? 24 is just the number of tiles we are inspecting
+		
+		for(int dir = 0; dir < 4; dir++){
+			count = 0;
+		
+			for(int i = 1; i < RANGE_OF_VIEW; i++){
+				for(int j = (int)(-TAN_FOV*i + 1); j <TAN_FOV*i ;j++){
+					fovDeltaCoordinates[dir][count][0] = dx[dir]*i + dx[(dir + 1)%4]*j;
+					
+					fovDeltaCoordinates[dir][count][1] = dy[dir]*i + dy[(dir + 1)%4]*j;
+					count ++;
+				}
+			}
+		
+		
+			for(int i = -1; i<=1 ;i++){
+				for(int j = -1; j <= 1; j++){
+					if(j == 0&& i == 0)
+						continue;
+					fovDeltaCoordinates[dir][count][0] = j;
+					fovDeltaCoordinates[dir][count][1] = i;
+					count++;
+				}
+			}
+		}
+	}
+	
+	public String getName(){
+		return "Number " + getCitizenNumber();
+	}
+	
+	public boolean hasImportantMode(){
+		return modeImportance < IMPORTANT_MEDIUM || (targetMode == MODE_RELAXING || targetMode == MODE_RELAX_AT_HOME);
+	}
+	
+	public void setToSpeakMode(String[] str, Integer[] dur, int param){
+		if(hasImportantMode()){
+			pauseMode();
+		}
+		modeParameter = param;
+		sentence.addAll(Arrays.asList(str));
+		dialogLengths.addAll(Arrays.asList(dur));
+		targetMode = MODE_SPEAKING_TO_PLAYER;
+		showDialog = true;
+	}
+	
+	
+	
+	public int getMode(){
+		return targetMode;
+	}
+	
 
+	public void processEvent(VillageEvent ve){
+	}
+	
+	public void setToWaitMode(VillageEvent ev, int importance){
+		pauseMode();
+		currEvent = ev;
+		targetMode = MODE_WAITING_FOR_EVENT;
+		modeImportance = importance;
+	}
+
+	public abstract String[] getPresentation();
+	public Integer[] getPresentationDurations(){
+		return new Integer[0];
+	}
+	public abstract boolean classHasPresented();
+	
+	public abstract boolean subclassSpeechInterrupted();
+	public abstract boolean subclassSpeechFinished();
 }

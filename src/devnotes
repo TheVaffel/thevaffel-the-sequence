@@ -1,6 +1,6 @@
 Ideas for working-classes:
 
-Mayor
+Mayor *
 Woodcutter
 Police
 Farmer (vegetative and animals)
@@ -9,4 +9,6 @@ Wise, old
 Carpenter
 Explorer/hunter
 Stroller
-Gardener
+Gardener *
+
+//TODO: Add classes!

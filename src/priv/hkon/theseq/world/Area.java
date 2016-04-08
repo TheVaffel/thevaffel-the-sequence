@@ -1,11 +1,14 @@
 package priv.hkon.theseq.world;
 
-public abstract class Area {
+import java.io.Serializable;
+
+public abstract class Area implements Serializable{
 	
-	int x, y, w, h;
-	Village village;
+	private static final long serialVersionUID = 5337909119183453964L;
+	protected int x, y, w, h;
+	protected Village village;
 	
-	int tiles[][];
+	protected int tiles[][];
 	
 	public Area(int nx, int ny, int nw, int nh, Village v) {
 		x = nx;

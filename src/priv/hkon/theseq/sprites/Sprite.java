@@ -1,13 +1,15 @@
 package priv.hkon.theseq.sprites;
 
-import java.util.LinkedList;
+import java.io.Serializable;
 import java.util.Random;
 
 import priv.hkon.theseq.world.Tile;
 import priv.hkon.theseq.world.Village;
 
-public abstract class Sprite {
+public abstract class Sprite implements Serializable{
 	
+	private static final long serialVersionUID = -1951040426546012965L;
+
 	protected int x, y;
 	
 	public static int W = Tile.WIDTH;
@@ -16,15 +18,6 @@ public abstract class Sprite {
 	protected int[][][][] animationFrames; //Animation no., frame no., y, x
 	protected int numFrames;
 	protected int numAnimations;
-	
-	protected DialogBubble dialog;
-	protected boolean showDialog = false;
-	protected int dialogDuration;
-	protected int timeSinceDialogReset;
-	
-	protected Conversation conversation;
-	
-	LinkedList<String> sentence = new LinkedList<String>();
 	
 	public static final Random RAND = new Random(1234);
 	
@@ -40,43 +33,32 @@ public abstract class Sprite {
 		village = v;
 		data = new int[H][W];
 		
-		dialog = new DialogBubble(this);
+		
 		
 		makeData();
 		makeAnimationFrames();
 	}
+	
+	public abstract String getName();
 
 	
 	public abstract void makeData();
 	public void makeAnimationFrames(){
 	}
 	
-	public void setDialogString(String str){
-		dialog.setString(str);
-	}
 	
-	public void showDialog(int dur){
-		showDialog = true;
-		timeSinceDialogReset = 0;
-		dialogDuration = dur;
-		
-	}
 	
 	public int distTo(Sprite s){
 		return Math.abs(s.getX() - getX()) + Math.abs(s.getY() - getY());
 	}
 	
-	public void hideDialog(){
-		showDialog = false;
-		dialogDuration = 0;
+	public int distTo(int nx, int ny){
+		return Math.abs(nx - x) + Math.abs(ny - y);
 	}
 	
-	public boolean shouldDrawDialog(){
-		return showDialog;
-	}
-	
-	public DialogBubble getDialog(){
-		return dialog;
+
+	public static int distBetween(int x1, int y1, int x2, int y2){
+		return Math.abs(x1 - x2) + Math.abs(y1 - y2);
 	}
 	
 	public static int getColor(int r, int g, int b){
@@ -88,20 +70,6 @@ public abstract class Sprite {
 	}
 	
 	public boolean tick(){
-		if(showDialog){
-			timeSinceDialogReset++;
-			if(timeSinceDialogReset >= dialogDuration){
-				if(!sentence.isEmpty()){
-					setDialogString(sentence.poll());
-					timeSinceDialogReset = 0;
-				}else{
-					if(conversation != null){
-						conversation.finishedSentence();
-					}
-					hideDialog();
-				}
-			}
-		}
 		return false;
 	}
 	
@@ -113,32 +81,34 @@ public abstract class Sprite {
 		return y;
 	}
 	
-	public void talk(){}
-	
-	void engageConversation(Sprite s, int importance){
-		conversation = new Conversation(this, s, importance);
-		setDialogString("Hey, you!");
-		showDialog(60*2);
-	}
-	
-	void inviteTo(Conversation c){
-		if(importantEnough(c)){
-			conversation = c;
-		}
-	}
-	
-	protected boolean importantEnough(Conversation c){
-		return true;
-	}
-	
-	public void deniedConversation(){
-		conversation = null;
-		setDialogString("Aaaah, why will nobody listen?");
-		showDialog(60*2);
-	}
-	
 	public boolean isStationary(){
 		return true;
 	}
 	
+	public static int getRandomInt(int u){
+		int b =  ((u + 2211) << 2)^u *10007 ^ 7532;
+		return b< 0? -b: b;
+	}
+	
+	public static int getRandomInt(int u, int v){
+		int b = ((u + 2552) << 2)^(v + 33443)*33645^5313;
+		return b < 0? -b: b;
+	}
+	
+	public static int multiplyColor(int rgb, float f){
+		rgb = ((int)((rgb&(255 << 16))*f)& (255 << 16)) | 
+				((int)((rgb&(255 << 8))*f)& (255 << 8)) |
+				((int)((rgb&(255 ))*f)& (255 )) | (255 << 24);
+		
+		return rgb;
+	}
+	
+	
+	public void setX(int nx){
+		x = nx;
+	}
+	
+	public void setY(int ny){
+		y = ny;
+	}
 }
