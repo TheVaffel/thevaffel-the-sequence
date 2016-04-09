@@ -89,21 +89,6 @@ public class Mayor extends Villager {
 	}
 
 	@Override
-	public Integer[] getPresentationDurations() {
-		return new Integer[] {
-			60,
-			120,
-			120,
-			120,
-			120,
-			120,
-			120,
-			120,
-			120
-		};
-	}
-
-	@Override
 	public boolean classHasPresented() {
 		return presented;
 	}

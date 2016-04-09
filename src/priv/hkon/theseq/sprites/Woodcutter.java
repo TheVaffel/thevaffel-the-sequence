@@ -57,19 +57,6 @@ public class Woodcutter extends Villager {
 	}
 
 	@Override
-	public Integer[] getPresentationDurations() {
-		return new Integer[] {
-				120,
-				180,
-				180,
-				180,
-				180,
-				180,
-				180
-		};
-	}
-
-	@Override
 	public boolean subclassSpeechInterrupted() {
 		return false;
 	}

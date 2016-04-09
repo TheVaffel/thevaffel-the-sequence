@@ -108,17 +108,6 @@ public class Prophet extends Villager {
 	}
 
 	@Override
-	public Integer[] getPresentationDurations() {
-		return new Integer[] {
-			120,
-			120,
-			120,
-			120,
-			180
-		};
-	}
-
-	@Override
 	public boolean classHasPresented() {
 		return presented;
 	}

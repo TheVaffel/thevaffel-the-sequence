@@ -770,7 +770,7 @@ public abstract class Villager extends Citizen{
 		}
 		
 		if(conversation.getOther(this) instanceof Player && !classHasPresented()){
-			setToSpeakMode(getPresentation(), getPresentationDurations(), SPEECH_PRESENTING);
+			setToSpeakMode(getPresentation(), SPEECH_PRESENTING);
 			return;
 		}
 		
@@ -949,13 +949,12 @@ public abstract class Villager extends Citizen{
 		return modeImportance < IMPORTANT_MEDIUM || (targetMode == MODE_RELAXING || targetMode == MODE_RELAX_AT_HOME);
 	}
 	
-	public void setToSpeakMode(String[] str, Integer[] dur, int param){
+	public void setToSpeakMode(String[] str, int param){
 		if(hasImportantMode()){
 			pauseMode();
 		}
 		modeParameter = param;
 		sentence.addAll(Arrays.asList(str));
-		dialogLengths.addAll(Arrays.asList(dur));
 		targetMode = MODE_SPEAKING_TO_PLAYER;
 		showDialog = true;
 	}
@@ -978,9 +977,6 @@ public abstract class Villager extends Citizen{
 	}
 
 	public abstract String[] getPresentation();
-	public Integer[] getPresentationDurations(){
-		return new Integer[0];
-	}
 	public abstract boolean classHasPresented();
 	
 	public abstract boolean subclassSpeechInterrupted();

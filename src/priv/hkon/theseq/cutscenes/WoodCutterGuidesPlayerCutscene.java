@@ -121,7 +121,7 @@ public class WoodCutterGuidesPlayerCutscene extends Cutscene {
 				"Easy as that. Get 10 logs to the storage crate next to my cabin.",
 				"I will see if you can get a reward afterwards",
 				"Now off you go!"
-		}, new Integer[0], 0);
+		},  0);
 		player.isPartOfCutscene = false;
 		woodcutter.isPartOfCutscene = false;
 	}

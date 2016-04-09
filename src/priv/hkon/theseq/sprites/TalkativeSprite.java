@@ -25,7 +25,6 @@ public abstract class TalkativeSprite extends Sprite{
 	public boolean isPartOfCutscene = false;
 	
 	LinkedList<String> sentence = new LinkedList<String>();
-	LinkedList<Integer> dialogLengths = new LinkedList<Integer>();
 	LinkedList<Notification> receivedNotifications = new LinkedList<Notification>();
 
 	public TalkativeSprite(int nx, int ny, Village v) {
@@ -76,10 +75,10 @@ public abstract class TalkativeSprite extends Sprite{
 			if(timeSinceDialogReset >= dialogDuration){
 				if(!sentence.isEmpty()){
 					setDialogString(sentence.poll());
-					if(!dialogLengths.isEmpty()){
-						dialogDuration = dialogLengths.poll();
-					}else{
+					if(!dialog.isEmpty()){
 						dialogDuration = 4*60;
+					}else{
+						dialogDuration = 2*60;
 					}
 					timeSinceDialogReset = 0;
 				}else{

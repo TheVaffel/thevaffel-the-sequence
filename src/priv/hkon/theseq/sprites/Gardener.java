@@ -139,21 +139,6 @@ public class Gardener extends Villager {
 		};
 	}
 
-	@Override
-	public Integer[] getPresentationDurations() {
-		return new Integer[]{
-				120,
-				120,
-				120,
-				120,
-				120,
-				120,
-				120,
-				120,
-				120,
-				120
-		};
-	}
 
 	@Override
 	public boolean classHasPresented() {

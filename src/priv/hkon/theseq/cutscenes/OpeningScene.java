@@ -159,6 +159,6 @@ public class OpeningScene extends Cutscene {
 		prophet.isPartOfCutscene = false;
 		core.getScreen().drawInstructions = false;
 		prophet.startPathTo(core.village.getTownMiddleX(), core.village.getTownStartY() + core.village.getTownHeight()  - 1);
-		prophet.setToSpeakMode(((Prophet)prophet).INTRODUCTION, Prophet.INTRODUCTION_DURATIONS, Villager.SPEECH_PRESENTING);
+		prophet.setToSpeakMode(((Prophet)prophet).INTRODUCTION, Villager.SPEECH_PRESENTING);
 	}
 }
