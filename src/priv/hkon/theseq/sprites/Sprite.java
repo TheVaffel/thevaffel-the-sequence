@@ -96,11 +96,22 @@ public abstract class Sprite implements Serializable{
 	}
 	
 	public static int multiplyColor(int rgb, float f){
+		if((rgb & (255 << 24)) == 0){
+			return 0;
+		}
 		rgb = ((int)((rgb&(255 << 16))*f)& (255 << 16)) | 
 				((int)((rgb&(255 << 8))*f)& (255 << 8)) |
 				((int)((rgb&(255 ))*f)& (255 )) | (255 << 24);
-		
 		return rgb;
+	}
+	
+	public static int getGray(int rgb){
+		if((rgb & (255 << 24)) == 0){
+			return 0;
+		}
+		int g = 2*((rgb& (255 << 16))>> 16) + 3 * ((rgb & (255 << 8 )) >> 8) + (rgb & (255));
+		g/= 6;
+		return (255 << 24) | (g << 16) | (g << 8) | g;
 	}
 	
 	

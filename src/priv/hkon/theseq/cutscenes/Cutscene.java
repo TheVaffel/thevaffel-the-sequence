@@ -59,6 +59,14 @@ public abstract class Cutscene {
 			ve = v;
 			sprite = s;
 		}
+		
+		public Happening(int t){
+			timeStamp = t;
+		}
+		
+		public Happening(VillageEvent v){
+			ve = v;
+		}
 		public abstract void happen();
 	}
 

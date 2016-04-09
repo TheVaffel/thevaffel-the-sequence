@@ -1,10 +1,10 @@
 package priv.hkon.theseq.nonblocks;
 
-import priv.hkon.theseq.sprites.TalkativeSprite;
+import priv.hkon.theseq.sprites.Sprite;
 import priv.hkon.theseq.world.Tile;
 import priv.hkon.theseq.world.Village;
 
-public abstract class TileCover extends TalkativeSprite {
+public abstract class TileCover extends Sprite {
 	
 	private static final long serialVersionUID = 6948279460203116282L;
 	public static final int W = Tile.WIDTH;

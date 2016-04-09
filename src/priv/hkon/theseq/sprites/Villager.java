@@ -981,4 +981,21 @@ public abstract class Villager extends Citizen{
 	
 	public abstract boolean subclassSpeechInterrupted();
 	public abstract boolean subclassSpeechFinished();
+	
+	@Override
+	public int[][] getData(){
+		if(!dead){
+			return super.getData();
+		}else{
+			int[][] g = super.getData();
+			int[][] temp = new int[H][W];
+			for(int i = 0; i < H; i++){
+				for(int j = 0; j < W; j++){
+					temp[i][j] = Sprite.multiplyColor(g[i][j], 0.5f);
+					temp[i][j] = Sprite.getGray(temp[i][j]);
+				}
+			}
+			return temp;
+		}
+	}
 }

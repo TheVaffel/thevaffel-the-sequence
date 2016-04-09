@@ -3,13 +3,17 @@ package priv.hkon.theseq.sprites;
 import java.awt.event.KeyEvent;
 
 import priv.hkon.theseq.blocks.Crate;
+import priv.hkon.theseq.blocks.Tree;
+import priv.hkon.theseq.cutscenes.FirstVictimDiscoveredCutscene;
 import priv.hkon.theseq.items.Item;
 import priv.hkon.theseq.main.Controller;
 import priv.hkon.theseq.misc.Conversation;
+import priv.hkon.theseq.nonblocks.Blood;
 import priv.hkon.theseq.nonblocks.BrushHolder;
 import priv.hkon.theseq.nonblocks.NonBlock;
 import priv.hkon.theseq.nonblocks.Pickable;
 import priv.hkon.theseq.structures.Bed;
+import priv.hkon.theseq.structures.House;
 import priv.hkon.theseq.world.Tile;
 import priv.hkon.theseq.world.Village;
 
@@ -20,7 +24,13 @@ public class Player extends Citizen {
 	Item carryItem;
 	
 	public int carryColor = 0;
-
+	
+	
+	public boolean followingBlood = false;
+	public int VICTIM_LOCATION_X = village.getTownMiddleX();
+	public int VICTIM_LOCATION_Y = village.getTownMiddleY() + village.getTownGridSide()*village.getHouseSpread();
+	public Villager victim;
+	
 	public Player(int x, int y, Village v, int i){
 		super(x, y, v, i);
 		//moveSpeed = 0.125f/2;
@@ -80,8 +90,19 @@ public class Player extends Citizen {
 		if(village.isInSleepMode()){
 			return true;
 		}
+		
+		if(followingBlood){
+			if(distTo(this.VICTIM_LOCATION_X, this.VICTIM_LOCATION_Y) < 8){
+				village.setCutscene(new FirstVictimDiscoveredCutscene(this, village.getProphet(), village.getDoctor(), victim, village.getCore()));
+				followingBlood = false;
+				village.werewolfQuestBegan = true;
+				return true;
+			}
+		}
+		
 		NonBlock d;
-		if(village.getTime()% Village.DAYCYCLE_DURATION > 30*60 &&(d =village.getNonBlockAt(x, y))!= null && d.getStructure() != null && d.getStructure() instanceof Bed){
+		if(village.getTime()% Village.DAYCYCLE_DURATION > 30*60 &&(d =village.getNonBlockAt(x, y))!= null && 
+				d.getStructure() != null && d.getStructure() instanceof Bed && !isPartOfCutscene){
 			showDialog("Press S to sleep til daylight", 2);
 			if(Controller.input[KeyEvent.VK_S]){
 				village.turnOnSleepMode();
@@ -139,5 +160,53 @@ public class Player extends Citizen {
 
 	public void setConversation(Conversation c){
 		conversation = c;
+	}
+	
+	
+	public House getHome(){
+		return village.getHouseAt(village.getTownGridSide()- 1, village.getTownGridSide() - 1);
+	}
+	
+	/*public int[][] getData(){// Only for debugging
+		int[][] t = super.getData();
+		for(int i = 0 ; i < H; i++){
+			for(int j = 0 ; j< W; j++){
+				t[i][j] = Sprite.multiplyColor(t[i][j], 0.5f);
+			}
+		}
+		return t;
+	}*/
+	
+	public void createWerewolfSetting(){
+		int sx = getHome().getX() - 2;
+		int sy = getHome().getY() + getHome().getH();
+		
+		int ex = this.VICTIM_LOCATION_X;
+		int ey = this.VICTIM_LOCATION_Y;
+		
+		while(ex != sx || ey != sy){
+			int d = getDirectionFromTo(sx, sy, ex, ey);
+			if(RAND.nextInt(2) == 0 && village.getSpriteAt(sx, sy) == null){
+				village.setTileCoverAt(new Blood(sx, sy, village), sx, sy);
+			}
+			sx += dx[d];
+			sy += dy[d];
+		}
+		
+		village.setTileCoverAt(new Blood(ex, ey,village), ex, ey);
+		
+		Villager v = (Villager) village.getCitizen(0);
+		victim = v;
+		v.die();
+		village.moveSpriteTo(v, ex, ey);
+		village.setSpriteAt(null, ex, ey + 1);
+		for(int i= v.getY() - 2; i < v.getY() + 4; i++){
+			for(int j = v.getX() - 2; j < v.getX() + 3; j ++){
+				if(village.getSpriteAt(j, i) instanceof Tree){
+					village.setSpriteAt(null, j, i);
+				}
+			}
+		}
+		followingBlood = true;
 	}
 }

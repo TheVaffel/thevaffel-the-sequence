@@ -17,7 +17,7 @@ public abstract class Movable extends TalkativeSprite implements Runnable{
 	public static final int[] dx = {-1, 0, 1, 0};
 	public static final int[] dy= {0, 1, 0, -1};
 	
-	float movedFraction = 1, moveSpeed = 0.05f;
+	public float movedFraction = 1, moveSpeed = 0.05f;
 	boolean moving = false;
 	int movingDirection = 0;
 	
@@ -28,6 +28,8 @@ public abstract class Movable extends TalkativeSprite implements Runnable{
 	byte[] path;
 	int pathIndex = 0;
 	int pathTargetX, pathTargetY;
+	
+	boolean dead = false;
 	
 	public Movable(int x, int y, Village v){
 		super(x, y, v);
@@ -121,6 +123,9 @@ public abstract class Movable extends TalkativeSprite implements Runnable{
 	
 	public boolean tick(){ //return whether the turn should be ended or not
 		boolean b = super.tick();
+		if(dead){
+			return true;
+		}
 		if(isPlanningPath){
 			return true;
 		}
@@ -372,6 +377,41 @@ public abstract class Movable extends TalkativeSprite implements Runnable{
 		
 		startPathTo(x + dx[n]*village.getHouseSpread(), y + dy[n]*village.getHouseSpread());
 		
+	}
+	
+	public boolean hasPath(){
+		return hasPath;
+	}
+	
+	public void setHasPath(boolean b){
+		hasPath = b;
+	}
+	
+	public int getDirectionFromTo(int x1, int y1, int x2, int y2){
+		int dx = x2 - x1;
+		int dy = y2 - y1;
+		
+		if(Math.abs(dx) > Math.abs(dy)){
+			if(dx > 0){
+				return RIGHT;
+			}else {
+				return LEFT;
+			}
+		}
+		if(dy > 0){
+			return DOWN;
+		}else{
+			return UP;
+		}
+	}
+	
+	public void die(){
+		dead = true;
+	}
+	
+	public void setPosition(int nx, int ny){
+		setX(nx);
+		setY(ny);
 	}
 	
 	/*class PairComparator implements Comparator<Pair>{

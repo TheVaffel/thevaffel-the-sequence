@@ -7,9 +7,7 @@ public abstract class Citizen extends Movable{
 	
 	private static final long serialVersionUID = -3959549715640637561L;
 
-
 	int citizenNumber;
-	
 
 	boolean isCalledUpon = false;
 	Sprite caller;

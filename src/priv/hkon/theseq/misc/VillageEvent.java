@@ -19,6 +19,10 @@ public abstract class VillageEvent {
 		this(village, s, 0);
 	}
 	
+	public VillageEvent(){
+		
+	}
+	
 	public abstract boolean isHappening();
 	
 	public int getID(){

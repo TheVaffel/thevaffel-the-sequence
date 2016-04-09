@@ -120,7 +120,7 @@ public class Screen extends JFrame{
 	public void initCharacters(){
 		charPositions = new int[256];
 		font = new Font("Monospaced", Font.PLAIN, FH);
-		String str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,.!?* -'0123456789<>";
+		String str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,.!?* -'0123456789<>:;";
 		//NB: If you are to add characters to the alphabet, you will need to output the string to the image file by uncommenting lines below
 		for(int i = 0; i < str.length(); i++){
 			charPositions[str.charAt(i)] = i;
@@ -132,14 +132,14 @@ public class Screen extends JFrame{
 		int[] bdata = ((DataBufferInt)(bu.getRaster().getDataBuffer())).getData();
 		for(int i = 0; i < str.length(); i++){
 			bdata[i] = 0;
-		}*/
+		}
 		
-		/*Graphics g = bu.getGraphics();
+		Graphics g = bu.getGraphics();
 		g.setFont(font);
 		g.setColor(Color.BLACK);
-		g.drawString(str, 0, FH);*/
+		g.drawString(str, 0, FH);
 		
-		/*try {
+		try {
 			ImageIO.write(bu, "png", new File("Alphabet.png"));
 		} catch (IOException e) {
 			e.printStackTrace();

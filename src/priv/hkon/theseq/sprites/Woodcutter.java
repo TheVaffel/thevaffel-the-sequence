@@ -98,7 +98,7 @@ public class Woodcutter extends Villager {
 	
 	public boolean tick(){
 		
-		if(village.getTimesSlept() >= 1 && !hasGuidedPlayer){
+		if(village.getTimesSlept() >= 1 && !hasGuidedPlayer && !village.woodcutterQuestCompleted){
 			//System.out.println("Happened!");
 			Building h = village.ownedBy(village.getPlayer().getX(), village.getPlayer().getY());
 			village.moveSpriteTo(this , h.getX() + village.getHouseSide()/2, h.getY() + village.getHouseSide() + 3);

@@ -7,8 +7,8 @@ import java.util.Random;
 import priv.hkon.theseq.blocks.Tree;
 import priv.hkon.theseq.blocks.Wall;
 import priv.hkon.theseq.cutscenes.Cutscene;
-import priv.hkon.theseq.cutscenes.OpeningScene;
 import priv.hkon.theseq.cutscenes.WakeUpCutscene;
+import priv.hkon.theseq.cutscenes.WakeUpToShadowCutscene;
 import priv.hkon.theseq.main.Controller;
 import priv.hkon.theseq.main.Core;
 import priv.hkon.theseq.main.Screen;
@@ -20,7 +20,9 @@ import priv.hkon.theseq.nonblocks.NonBlock;
 import priv.hkon.theseq.nonblocks.TileCover;
 import priv.hkon.theseq.nonblocks.WoodTileCover;
 import priv.hkon.theseq.sprites.Citizen;
+import priv.hkon.theseq.sprites.Doctor;
 import priv.hkon.theseq.sprites.Gardener;
+import priv.hkon.theseq.sprites.Janitor;
 import priv.hkon.theseq.sprites.Mayor;
 import priv.hkon.theseq.sprites.Movable;
 import priv.hkon.theseq.sprites.Nobody;
@@ -49,8 +51,17 @@ public class Village implements Serializable{
 	
 	Random random;
 	
-	public boolean woodcutterQuestCompleted = false; 
+	public boolean woodcutterQuestCompleted = false;
+	public boolean werewolfQuestBegan = false;
 	public boolean painterQuestCompleted = false;
+	
+	Prophet prophet;
+	Mayor mayor;
+	Gardener gardener;
+	Woodcutter woodcutter;
+	Painter painter;
+	Doctor doctor;
+	Janitor janitor;
 	
 	public boolean nightBoost = false;
 	
@@ -166,19 +177,39 @@ public class Village implements Serializable{
 		
 		
 		int i;
-		for(i = 0; i< numVillagers - 5; i++){
+		for(i = 0; i< numVillagers - 7; i++){
 			villagers[villagerPermutation[i]]= new Nobody(townGrid[villagerPermutation[i]/townGridSide][villagerPermutation[i]%townGridSide].getX() + houseSide/2, 
 					townGrid[villagerPermutation[i]/townGridSide][villagerPermutation[i]%townGridSide].getY() + houseSide/2, 
 					this, townGrid[villagerPermutation[i]/townGridSide][villagerPermutation[i]%townGridSide], i);
 			addSprite(villagers[villagerPermutation[i]]);
 		}
 		
+		
 		int vi = villagerPermutation[i];
+		villagers[vi] = new Janitor(townGrid[vi/townGridSide][vi%townGridSide].getX() + houseSide/2,
+				townGrid[vi/townGridSide][vi%townGridSide].getY() + houseSide/2,
+				 this, townGrid[vi/townGridSide][vi%townGridSide], i);
+		addSprite(villagers[vi]);
+		janitor = (Janitor)villagers[vi];
+		
+		
+		i++;
+		vi = villagerPermutation[i];
+		villagers[vi] = new Doctor(townGrid[vi/townGridSide][vi%townGridSide].getX() + houseSide/2,
+				townGrid[vi/townGridSide][vi%townGridSide].getY() + houseSide/2,
+				 this, townGrid[vi/townGridSide][vi%townGridSide], i);
+		addSprite(villagers[vi]);
+		doctor = (Doctor)villagers[vi];
+		
+		
+		i++;
+		vi = villagerPermutation[i];
 		
 		villagers[vi] = new Painter(townGrid[vi/townGridSide][vi%townGridSide].getX() + houseSide/2,
 				townGrid[vi/townGridSide][vi%townGridSide].getY() + houseSide/2,
 				/*this.townGridMiddleX + 100, this.townGridMiddleY + 10,*/ this, townGrid[vi/townGridSide][vi%townGridSide], i);
 		addSprite(villagers[vi]);
+		painter = (Painter)(villagers[vi]);
 		
 		
 		i++;
@@ -189,6 +220,7 @@ public class Village implements Serializable{
 				townGrid[vi/townGridSide][vi%townGridSide].getY() + houseSide/2,
 				/*this.townGridMiddleX + 100, this.townGridMiddleY + 10,*/ this, townGrid[vi/townGridSide][vi%townGridSide], i);
 		addSprite(villagers[vi]);
+		woodcutter = (Woodcutter)(villagers[vi]);
 		//villagers[vi].setMode(Woodcutter.MODE_WAIT_FOR_PLAYER_FILLING_CRATE, 3, null);
 		/*villagers[vi].setToWaitMode(new VillageEvent(this, villagers[vi], Woodcutter.EVENT_WAIT_TO_GUIDE_PLAYER){
 			public boolean isHappening(){
@@ -204,6 +236,7 @@ public class Village implements Serializable{
 				townGrid[villagerPermutation[i]/townGridSide][villagerPermutation[i]%townGridSide].getY() + houseSide/2, 
 				this, townGrid[villagerPermutation[i]/townGridSide][villagerPermutation[i]%townGridSide], i);
 		addSprite(villagers[villagerPermutation[i]]);
+		gardener = (Gardener)(villagers[villagerPermutation[i]]);
 		
 		i++;
 		
@@ -211,6 +244,7 @@ public class Village implements Serializable{
 				townGrid[villagerPermutation[i]/townGridSide][villagerPermutation[i]%townGridSide].getY() + houseSide/2, 
 				this, townGrid[villagerPermutation[i]/townGridSide][villagerPermutation[i]%townGridSide], i);
 		addSprite(villagers[villagerPermutation[i]]);
+		mayor = (Mayor)(villagers[villagerPermutation[i]]);
 		
 		//villagers[0].debug = true;
 		
@@ -257,11 +291,12 @@ public class Village implements Serializable{
 		}
 		
 		int villageri = villagerPermutation[numVillagers-5];
-		player = new Player(/*townGrid[6][6].getX() + houseSide/2,
-				townGrid[6][6].getY() + houseSide/2,*/
+		player = new Player(/*janitor.getX() + 2, janitor.getY() + 2*/
+				townGrid[6][6].getX() + houseSide/2,
+				townGrid[6][6].getY() + houseSide/2,
 				/*villagers[villageri].getX() - 2,
 				villagers[villageri].getY() - 2,*/
-				sx + w/2, sy + h/2, this, numVillagers);
+				/*sx + w/2, sy + h/2,*/ this, numVillagers);
 		citizenList[numVillagers] = player;
 		addSprite(player); 
 		
@@ -269,9 +304,10 @@ public class Village implements Serializable{
 		Prophet p = new Prophet(sx + w/2, sy, this, townGrid[villagerPermutation[i]/townGridSide][villagerPermutation[i]%townGridSide], i);
 		villagers[villagerPermutation[i]] = p;
 		addSprite(villagers[villagerPermutation[i]]);
+		prophet = ((Prophet)(villagers[villagerPermutation[i]]));
 		
-		currScene = new OpeningScene(player, p, core);
-		inCutscene = true;
+		//currScene = new OpeningScene(player, p, core);
+		//inCutscene = true;
 	}
 	
 	public int[][] getScreenData(int w, int h){
@@ -599,6 +635,9 @@ public class Village implements Serializable{
 		sprites[s.getY()][s.getX()] = null;
 		s.setX(x);
 		s.setY(y);
+		if(s instanceof Movable){
+			((Movable)s).movedFraction = 1;
+		}
 		sprites[y][x] = s;
 	}
 	
@@ -712,8 +751,14 @@ public class Village implements Serializable{
 		}
 		nightBoost = true;
 		
-		core.playWavSound(Core.WAV_SLEEP);
-		time = (time + Village.DAYCYCLE_DURATION)/Village.DAYCYCLE_DURATION*Village.DAYCYCLE_DURATION - 5*60;
+		if(woodcutterQuestCompleted && !this.werewolfQuestBegan){
+			werewolfQuestBegan = true;
+			time = (time + Village.DAYCYCLE_DURATION)/Village.DAYCYCLE_DURATION*Village.DAYCYCLE_DURATION - 3*60*60;
+			setCutscene(new WakeUpToShadowCutscene(player, shadow, core));
+		}else{
+			core.playWavSound(Core.WAV_SLEEP);
+			time = (time + Village.DAYCYCLE_DURATION)/Village.DAYCYCLE_DURATION*Village.DAYCYCLE_DURATION - 5*60;
+		}
 	}
 	
 	public int getTimesSlept(){
@@ -771,6 +816,34 @@ public class Village implements Serializable{
 
 	public TileCover getTileCoverAt(int x, int y) {
 		return tileCovers[y][x];
+	}
+	
+	public Painter getPainter(){
+		return painter;
+	}
+	
+	public Woodcutter getWoodcutter(){
+		return woodcutter;
+	}
+	
+	public Mayor getMayor(){
+		return mayor;
+	}
+	
+	public Gardener getGardener(){
+		return gardener;
+	}
+	
+	public Prophet getProphet(){
+		return prophet;
+	}
+	
+	public Doctor getDoctor(){
+		return doctor;
+	}
+	
+	public Janitor getJanitor(){
+		return janitor;
 	}
 	
 }
