@@ -101,8 +101,6 @@ public abstract class Villager extends Citizen{
 	
 	int modeParameter; //For various use, depending on mode
 	
-	//TODO: Make woodcutter, with his own woodcutter-cabin
-	
 	public int expectingVisit = -1;
 	public boolean expectingSeveralVisits = false;
 	
@@ -753,13 +751,6 @@ public abstract class Villager extends Citizen{
 	}
 	
 	public void talk(){
-		/*if(conversation.getOwner() == this){
-			askQuestion(RAND.nextInt(Sentence.QUESTIONS.length));
-		}else{
-			
-			
-			disconnectFromTalk();
-		}*/
 		
 		if(conversation == null){
 			return;
@@ -788,7 +779,9 @@ public abstract class Villager extends Citizen{
 			if(conversation.getOther(this) instanceof Player){
 				//System.out.println("Talking to Player");
 				if(type == Sentence.TYPE_GREETING){
-					if(RAND.nextInt(5) == 0 || !(this instanceof Nobody)){
+					if(village.getMood() != Village.MOOD_NON&& Sprite.RAND.nextInt(4) >0){
+						saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_VILLAGE_MOOD, 1, village.getRandomMoodSentence(village.getMood()), this));
+					}else if(RAND.nextInt(4) == 0 || !(this instanceof Nobody)){
 						saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_QUESTION, this, village.getCitizen(id)));
 					}else{
 						saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_RUMOR_INTRODUCTION, this));
@@ -798,7 +791,7 @@ public abstract class Villager extends Citizen{
 				}else
 				if(type == Sentence.TYPE_EMPTY){
 					saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_PLAYER_NOT_TALKATIVE, Math.min(Math.max((int)(aff + 1), 0), 2), this));
-				}else if(type == Sentence.TYPE_PLAYER_NOT_TALKATIVE || type == Sentence.TYPE_RUMORS){
+				}else if(type == Sentence.TYPE_PLAYER_NOT_TALKATIVE || type == Sentence.TYPE_RUMORS || type == Sentence.TYPE_VILLAGE_MOOD){
 					saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_GOODBYE, Math.min(Math.max((int)(aff + 1), 0), 2), this));
 					disconnectFromTalk();
 				}else{
@@ -811,12 +804,16 @@ public abstract class Villager extends Citizen{
 				saySentence(new Sentence(conversation.getOther(this),Sentence.TYPE_GREETING, Sentence.GREETING_NEUTRAL, this));
 				return;
 			}else if(type == Sentence.TYPE_GREETING){
-				saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_QUESTION, this, village.getCitizen(id)));
+				if(Sprite.RAND.nextInt(4) < 0 && village.getMood() != Village.MOOD_NON){
+					saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_VILLAGE_MOOD, 1, village.getRandomMoodSentence(village.getMood()), this));
+				}else{
+					saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_QUESTION, this, village.getCitizen(id)));
+				}
 				return;
 			}else if(type == Sentence.TYPE_QUESTION){
 				saySentence(getAnswer(conversation.getLastSentence().getArg2()));
 				return;
-			}else if(type == Sentence.TYPE_CUSTOM_ANSWER){
+			}else if(type == Sentence.TYPE_CUSTOM_ANSWER || type == Sentence.TYPE_VILLAGE_MOOD){
 				saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_RESPONSE, Math.min(Math.max((int)(2*Sentence.meaningWeight[conversation.getLastSentence().getArg2()]*aff) + 1, 0), 2), this));
 				return;
 			}else if(type == Sentence.TYPE_GOODBYE ){

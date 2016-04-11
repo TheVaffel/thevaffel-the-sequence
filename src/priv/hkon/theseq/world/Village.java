@@ -51,9 +51,26 @@ public class Village implements Serializable{
 	
 	Random random;
 	
-	public boolean woodcutterQuestCompleted = false;
+	public boolean woodcutterQuestCompleted = true;
 	public boolean werewolfQuestBegan = false;
 	public boolean painterQuestCompleted = false;
+	
+	int dayMood = MOOD_NON;
+	int nextMood = MOOD_NON;
+	
+	public static final int MOOD_NON = 0;
+	public static final int MOOD_MURDER_IN_FOREST = 1;
+	
+	public static final String[][][] MOOD_SENTENCES = {
+			{
+				{}
+			},
+			{
+				{"Heard there was a murder in the forest last night..", "Poor, poor fellow"},
+				{"What a shame, what happened in the forest", "I really hope the responsible get to pay"},
+				{"What happened in the forest is just really unfair", "I hate things like that"}
+			}
+	};
 	
 	Prophet prophet;
 	Mayor mayor;
@@ -434,6 +451,11 @@ public class Village implements Serializable{
 		if(nightBoost && time % Village.DAYCYCLE_DURATION <30){
 			nightBoost = false;
 			setCutscene(new WakeUpCutscene(core, player));
+		}
+		
+		if(time % Village.DAYCYCLE_DURATION == 0){
+			dayMood = nextMood;
+			nextMood = MOOD_NON;
 		}
 		if(Controller.input[KeyEvent.VK_B]){
 			breakPoint();
@@ -846,4 +868,16 @@ public class Village implements Serializable{
 		return janitor;
 	}
 	
+	
+	public String[] getRandomMoodSentence(int mood){
+		return MOOD_SENTENCES[mood][Sprite.RAND.nextInt(MOOD_SENTENCES[mood].length)];
+	}
+	
+	public void setNextDayMood(int m){
+		nextMood = m;
+	}
+	
+	public int getMood(){
+		return dayMood;
+	}
 }

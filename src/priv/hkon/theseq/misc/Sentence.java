@@ -18,6 +18,7 @@ public class Sentence  implements Serializable{
 	public static final int TYPE_PLAYER_NOT_TALKATIVE = 7;
 	public static final int TYPE_RUMOR_INTRODUCTION = 8;
 	public static final int TYPE_RUMORS = 9;
+	public static final int TYPE_VILLAGE_MOOD = 10;
 	
 	public static final int STATEMENT_NEGATIVE = 0;
 	public static final int STATEMENT_NEUTRAL = 1;
@@ -138,6 +139,8 @@ public class Sentence  implements Serializable{
 			}
 	};
 	
+	public static final String[][] MOOD_SENTENCE = {{}};
+	
 	public static final String NONE[][] = {{""}};
 	
 	public static final String[][] CUSTOM_ANSWERS = {{}};
@@ -152,7 +155,8 @@ public class Sentence  implements Serializable{
 		NONE,
 		PLAYER_NOT_TALKATIVE,
 		RUMOR_INTRODUCTION,
-		GENERAL_RUMORS
+		GENERAL_RUMORS,
+		MOOD_SENTENCE
 	};
 	
 	String[] strings;

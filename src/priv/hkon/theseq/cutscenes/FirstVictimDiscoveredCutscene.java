@@ -10,6 +10,7 @@ import priv.hkon.theseq.sprites.Movable;
 import priv.hkon.theseq.sprites.Player;
 import priv.hkon.theseq.sprites.Prophet;
 import priv.hkon.theseq.sprites.Villager;
+import priv.hkon.theseq.world.Village;
 
 public class FirstVictimDiscoveredCutscene extends Cutscene {
 	
@@ -213,6 +214,8 @@ public class FirstVictimDiscoveredCutscene extends Cutscene {
 	public void close(){
 		super.close();
 		//TODO
+		
+		core.village.setNextDayMood(Village.MOOD_MURDER_IN_FOREST);
 		
 		dc.isPartOfCutscene = false;
 		pl.isPartOfCutscene = false;
