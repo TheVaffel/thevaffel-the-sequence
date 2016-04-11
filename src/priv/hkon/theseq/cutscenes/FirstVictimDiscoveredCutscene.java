@@ -7,6 +7,7 @@ import priv.hkon.theseq.misc.VillageEvent;
 import priv.hkon.theseq.sprites.Doctor;
 import priv.hkon.theseq.sprites.Janitor;
 import priv.hkon.theseq.sprites.Movable;
+import priv.hkon.theseq.sprites.Nobody;
 import priv.hkon.theseq.sprites.Player;
 import priv.hkon.theseq.sprites.Prophet;
 import priv.hkon.theseq.sprites.Villager;
@@ -18,6 +19,8 @@ public class FirstVictimDiscoveredCutscene extends Cutscene {
 	Prophet pr;
 	Doctor dc;
 	Villager victim;
+	
+	int nextTalkToVillager = 2;
 	
 	DarkenFilter df = new DarkenFilter(0);
 	
@@ -216,6 +219,26 @@ public class FirstVictimDiscoveredCutscene extends Cutscene {
 		//TODO
 		
 		core.village.setNextDayMood(Village.MOOD_MURDER_IN_FOREST);
+		core.village.setNextPublicSentence(new String[] {"You should check out house " + core.village.getHouseNum(nextTalkToVillager),
+			"Er said that er had something for you specifically",
+			"By the way, in case noone has told you",
+			"All our houses are numbered with two digits",
+			"The first is the number of the house from west to east",
+			"And the other is the number from north to south",
+			"Easy! If I remember correctly, that is..",
+			"House " + core.village.getHouseNum(nextTalkToVillager) + "!",
+			"You can't miss it!"
+		});
+		
+		Villager v = ((Villager)core.village.getCitizen(nextTalkToVillager));
+		
+		v.setWaitForEvent(new VillageEvent(core.village, Nobody.EVENT_WAITING_FOR_PLAYER_ENTRANCE){
+			public boolean isHappening(){
+				return v.getHome().isClosedAtGlobal(core.village.getPlayer().getX(), core.village.getPlayer().getY());
+			}
+		});
+		
+		v.setPosition(v.getHome().getX() + v.getHome().getW()/2, v.getHome().getY() + v.getHome().getH()/2);
 		
 		dc.isPartOfCutscene = false;
 		pl.isPartOfCutscene = false;

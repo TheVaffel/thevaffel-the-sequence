@@ -8,14 +8,12 @@ import priv.hkon.theseq.world.Tile;
 
 public class DialogBubble implements Serializable{
 	
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1658731957901153906L;
-	//String[] str;
+	
 	Sprite sprite;
 	int[][] data;
 	int width;
+	int maxWidth;
 	int numLines;
 	
 	boolean empty = false;
@@ -29,7 +27,11 @@ public class DialogBubble implements Serializable{
 
 	public DialogBubble(Sprite sprite) {
 		this.sprite = sprite;
-		width = DEFAULT_WIDTH;
+		maxWidth = DEFAULT_WIDTH;
+	}
+	
+	public DialogBubble(int width){
+		this.maxWidth = width;
 	}
 
 	public void setString(String s){
@@ -42,7 +44,7 @@ public class DialogBubble implements Serializable{
 		StringBuilder sb = new StringBuilder();
 		int currrow = 0, numrows = 1;
 		int i = 0;
-		int charactersInWidth = DEFAULT_WIDTH/Screen.FONT_WIDTH;
+		int charactersInWidth = maxWidth/Screen.FONT_WIDTH;
 		while(i < st.length){
 			if(st[i].length() <= charactersInWidth - currrow){
 				currrow += st[i].length() + 1;

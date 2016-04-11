@@ -122,4 +122,12 @@ public abstract class Sprite implements Serializable{
 	public void setY(int ny){
 		y = ny;
 	}
+	
+	public float getExactX(){
+		return x;
+	}
+	
+	public float getExactY(){
+		return y;
+	}
 }

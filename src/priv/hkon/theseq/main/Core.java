@@ -177,6 +177,10 @@ public class Core implements Runnable{
 		screen.update();
 		changedFilter = false;
 	}
+	
+	public Filter getCutsceneFilter(){
+		return cutsceneFilter;
+	}
 
 	@Override
 	public void run() {

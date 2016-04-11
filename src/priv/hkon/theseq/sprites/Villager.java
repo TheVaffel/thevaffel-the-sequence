@@ -779,8 +779,10 @@ public abstract class Villager extends Citizen{
 			if(conversation.getOther(this) instanceof Player){
 				//System.out.println("Talking to Player");
 				if(type == Sentence.TYPE_GREETING){
-					if(village.getMood() != Village.MOOD_NON&& Sprite.RAND.nextInt(4) >0){
-						saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_VILLAGE_MOOD, 1, village.getRandomMoodSentence(village.getMood()), this));
+					if((village.getMood()& Village.MOOD_PUBLIC_SENTENCE) != 0 && RAND.nextInt(3) == 0){
+						saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_VILLAGE_MOOD, 1, village.publicSentence, this));
+					}else if(village.getMood() != Village.MOOD_NON&& Sprite.RAND.nextInt(4) >0){
+						saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_VILLAGE_MOOD, 1, village.getRandomMoodSentence(village.getMood()&-village.getMood()), this));
 					}else if(RAND.nextInt(4) == 0 || !(this instanceof Nobody)){
 						saySentence(new Sentence(conversation.getOther(this), Sentence.TYPE_QUESTION, this, village.getCitizen(id)));
 					}else{
@@ -994,5 +996,12 @@ public abstract class Villager extends Citizen{
 			}
 			return temp;
 		}
+	}
+	
+	public void setWaitForEvent(VillageEvent ev){
+		pauseMode();
+		targetMode = Villager.MODE_WAITING_FOR_EVENT;
+		currEvent = ev;
+		targetSprite = null;
 	}
 }

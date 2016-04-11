@@ -12,11 +12,16 @@ public abstract class VillageEvent {
 	public VillageEvent(Village village, Sprite s, int i) {
 		this.village = village;
 		this.subject = s;
-		i = id;
+		id = i;
 	}
 	
 	public VillageEvent(Village village, Sprite s){
 		this(village, s, 0);
+	}
+	
+	public VillageEvent(Village village, int i){
+		this.village = village;
+		id = i;
 	}
 	
 	public VillageEvent(){

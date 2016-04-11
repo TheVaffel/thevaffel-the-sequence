@@ -1,5 +1,7 @@
 package priv.hkon.theseq.sprites;
 
+import priv.hkon.theseq.cutscenes.HistoryOfVictim1Cutscene;
+import priv.hkon.theseq.misc.VillageEvent;
 import priv.hkon.theseq.structures.House;
 import priv.hkon.theseq.world.Village;
 
@@ -8,6 +10,8 @@ public class Nobody extends Villager {
 	private static final long serialVersionUID = -5133115310564670168L;
 	
 	static boolean presented = false;
+	
+	public static final int EVENT_WAITING_FOR_PLAYER_ENTRANCE = 0;
 
 	public Nobody(int x, int y, Village v, House h, int i) {
 		super(x, y, v, h, i);
@@ -39,25 +43,6 @@ public class Nobody extends Villager {
 				"But.. I should return to my nobodyness"
 		};
 	}
-	
-	public Integer[] getPresentationDurations(){
-		return new Integer[] {
-				60,
-				120,
-				120,
-				180,
-				120,
-				180,
-				90,
-				120,
-				180,
-				120,
-				180,
-				180,
-				120,
-				120
-		};
-	}
 
 	@Override
 	public boolean classHasPresented() {
@@ -79,6 +64,17 @@ public class Nobody extends Villager {
 	
 	public String getName(){
 		return "Nobody " + citizenNumber;
+	}
+	
+	@Override
+	public void processEvent(VillageEvent ev){
+		switch(ev.getID()){
+		case Nobody.EVENT_WAITING_FOR_PLAYER_ENTRANCE : 
+			{
+			village.setCutscene(new HistoryOfVictim1Cutscene(this, village.getPlayer(), village.getCore()));
+			//System.out.println("Set cutscene");
+			}
+		}
 	}
 
 }

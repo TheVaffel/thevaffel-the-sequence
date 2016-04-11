@@ -15,6 +15,12 @@ public class Shadow extends Movable {
 	public String getName() {
 		return "Shadow";
 	}
+	
+	@Override
+	public boolean tick(){
+		data = animationFrames[movingDirection][(int)(movedFraction*(animationFrames[movingDirection].length-1))];
+		return super.tick();
+	}
 
 	@Override
 	public void makeAnimationFrames() {

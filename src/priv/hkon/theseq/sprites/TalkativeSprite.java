@@ -76,7 +76,7 @@ public abstract class TalkativeSprite extends Sprite{
 				if(!sentence.isEmpty()){
 					setDialogString(sentence.poll());
 					if(!dialog.isEmpty()){
-						dialogDuration = 4*60;
+						dialogDuration = 6*60;
 					}else{
 						dialogDuration = 2*60;
 					}

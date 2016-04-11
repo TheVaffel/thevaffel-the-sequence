@@ -2,6 +2,8 @@ package priv.hkon.theseq.world;
 
 import java.awt.event.KeyEvent;
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.Random;
 
 import priv.hkon.theseq.blocks.Tree;
@@ -14,6 +16,7 @@ import priv.hkon.theseq.main.Core;
 import priv.hkon.theseq.main.Screen;
 import priv.hkon.theseq.misc.DialogBubble;
 import priv.hkon.theseq.misc.Sentence;
+import priv.hkon.theseq.misc.VillageEvent;
 import priv.hkon.theseq.nonblocks.Door;
 import priv.hkon.theseq.nonblocks.Flowers;
 import priv.hkon.theseq.nonblocks.NonBlock;
@@ -60,6 +63,12 @@ public class Village implements Serializable{
 	
 	public static final int MOOD_NON = 0;
 	public static final int MOOD_MURDER_IN_FOREST = 1;
+	public static final int MOOD_PUBLIC_SENTENCE = 1<<1;
+	
+	public String[] publicSentence;
+	public String[] nextPublicSentence;
+	
+	public Movable controlledSprite;
 	
 	public static final String[][][] MOOD_SENTENCES = {
 			{
@@ -71,6 +80,12 @@ public class Village implements Serializable{
 				{"What happened in the forest is just really unfair", "I hate things like that"}
 			}
 	};
+	
+	public boolean showSubtitle = false;
+	int subtitleDuration = 0;
+	int timeSinceSubtitleReset = 0;
+	LinkedList<String> subtitles = new LinkedList<String>();
+	DialogBubble subtitleDialog = new DialogBubble(Screen.W - 10);
 	
 	Prophet prophet;
 	Mayor mayor;
@@ -125,6 +140,8 @@ public class Village implements Serializable{
 	double tilesPerPixelX = 1.0/Tile.WIDTH;
 	double tilesPerPixelY = 1.0/Tile.HEIGHT;
 	
+	public Sprite centerSubject;
+	
 	transient Core core;
 	
 	public static final int DAYCYCLE_DURATION = 60*60*10;
@@ -141,7 +158,20 @@ public class Village implements Serializable{
 		
 		shadow = new Shadow(0,0, this);
 		buildVillage();
+		centerSubject = player;
+		controlledSprite = player;
 		
+		/*int nextTalkToVillager = 2;
+		Villager v = ((Villager)getCitizen(nextTalkToVillager));
+		System.out.println("House number " + getHouseNum(nextTalkToVillager));
+		
+		v.setWaitForEvent(new VillageEvent(core.village, Nobody.EVENT_WAITING_FOR_PLAYER_ENTRANCE){
+			public boolean isHappening(){
+				return v.getHome().isClosedAtGlobal(core.village.getPlayer().getX(), core.village.getPlayer().getY());
+			}
+		});
+		
+		v.setPosition(v.getHome().getX() + v.getHome().getW()/2, v.getHome().getY() + v.getHome().getH()/2);*/
 	}
 	
 	public void buildVillage(){
@@ -429,13 +459,8 @@ public class Village implements Serializable{
 			sumy += stepY;
 		}
 		
-		if(!shouldDrawInside){
-			/*float f = getNightFactor();
-			for(int i = 0; i < h; i++){
-				for(int j = 0; j < w; j++){
-					data[i][j] = Screen.nightFilter(data[i][j],f);
-				}
-			}*/
+		if(showSubtitle){
+			Screen.draw(data, Screen.W, Screen.H, subtitleDialog.getData(), subtitleDialog.getWidth(), subtitleDialog.getHeight(), 0, Screen.H - subtitleDialog.getHeight());
 		}
 		
 		return data;
@@ -456,6 +481,8 @@ public class Village implements Serializable{
 		if(time % Village.DAYCYCLE_DURATION == 0){
 			dayMood = nextMood;
 			nextMood = MOOD_NON;
+			publicSentence = nextPublicSentence;
+			nextPublicSentence = null;
 		}
 		if(Controller.input[KeyEvent.VK_B]){
 			breakPoint();
@@ -470,7 +497,6 @@ public class Village implements Serializable{
 		}
 		
 		if(inCutscene){
-			
 			currScene.tick();
 			if(currScene.isFinished() || Controller.input[KeyEvent.VK_U]){
 				//System.out.println("CurrSceneFinished: " + currScene.isFinished());
@@ -479,6 +505,8 @@ public class Village implements Serializable{
 				currScene = null;
 			}
 		}
+		
+		
 		for(int i = 0; i < H; i++){
 			for(int j = 0; j <W; j++){
 				if(sprites[i][j] != null)
@@ -490,9 +518,13 @@ public class Village implements Serializable{
 		}
 		//player.tick();
 		
-		handlePlayerInput();
-		centerCameraOnPlayer();
+		handleControlledSpriteInput();
+		handleSubtitle();
+		centerCameraOnCenterSubject();
 		setDrawMode();
+		
+		
+		
 		time++;
 	}
 	
@@ -517,12 +549,12 @@ public class Village implements Serializable{
 	}
 	
 	public void setDrawMode(){
-		if(ownedBy[player.getY()][player.getX()] == null){
+		if(ownedBy[centerSubject.getY()][centerSubject.getX()] == null){
 			shouldDrawInside = false;
 			currBuilding = null;
 		}else{
 			shouldDrawInside = true;
-			currBuilding = ownedBy[player.getY()][player.getX()];
+			currBuilding = ownedBy[centerSubject.getY()][centerSubject.getX()];
 		}
 	}
 	
@@ -530,16 +562,16 @@ public class Village implements Serializable{
 		return time;
 	}
 	
-	public void centerCameraOnPlayer(){
+	public void centerCameraOnCenterSubject(){
 		//camX = villagers[villagerPermutation[numVillagers-4]].getExactX() - Screen.W/2/Tile.WIDTH ;
 		//camY = villagers[villagerPermutation[numVillagers-4]].getExactY() - Screen.H/2/Tile.HEIGHT;
-		camX = player.getExactX() - Screen.W/2/Tile.WIDTH ;
-		camY = player.getExactY() - Screen.H/2/Tile.HEIGHT;
+		camX = centerSubject.getExactX() - Screen.W/2/Tile.WIDTH ;
+		camY = centerSubject.getExactY() - Screen.H/2/Tile.HEIGHT;
 		
 		//System.out.println(player.getExactX() + ", " + player.getExactY());
 	}
 	
-	public void handlePlayerInput(){
+	public void handleControlledSpriteInput(){
 		int dir = -1;
 		if(Controller.input[KeyEvent.VK_UP]){
 			dir = Movable.UP;
@@ -553,8 +585,8 @@ public class Village implements Serializable{
 		else if(Controller.input[KeyEvent.VK_RIGHT]){
 			dir = Movable.RIGHT;
 		}
-		if(dir != -1 && !player.isPartOfCutscene){
-			player.tryStartMoving(dir);
+		if(dir != -1 && (! (controlledSprite instanceof Player) || !player.isPartOfCutscene)){
+			controlledSprite.tryStartMoving(dir);
 		}
 		
 		/*if(getTime()% 60 == 0){
@@ -874,10 +906,52 @@ public class Village implements Serializable{
 	}
 	
 	public void setNextDayMood(int m){
-		nextMood = m;
+		nextMood |= m;
+	}
+	
+	public void setNextPublicSentence(String[] ns){
+		nextMood |= Village.MOOD_PUBLIC_SENTENCE;
+		nextPublicSentence = ns;
+		
 	}
 	
 	public int getMood(){
 		return dayMood;
+	}
+	
+	public String getHouseNum(int villageri){
+		int vi = villagerPermutation[villageri];
+		return ((vi%townGridSide)+1) + "" + ((vi/townGridSide) + 1);
+	}
+	
+	public void handleSubtitle(){
+		
+		if(showSubtitle){
+			timeSinceSubtitleReset++;
+			if(timeSinceSubtitleReset > 20 && Controller.input[KeyEvent.VK_S]){
+				timeSinceSubtitleReset = 1000;
+			}
+			if(timeSinceSubtitleReset > subtitleDuration){
+				if(!this.subtitles.isEmpty()){
+					subtitleDialog.setString(subtitles.poll());
+					subtitleDuration = 6*60;
+					timeSinceSubtitleReset = 0;
+				}else{
+					//System.out.println("Hides subtitles");
+					showSubtitle = false;
+				}
+				
+			}
+		}
+	}
+	
+	public void addAndShowSubtitles(String[] sub){
+		subtitles.addAll(Arrays.asList(sub));
+		showSubtitle = true;
+		//System.out.println("Shows subtitles");
+	}
+	
+	public void removeSprite(Sprite s){
+		setSpriteAt(null, s.getX(), s.getY());
 	}
 }
