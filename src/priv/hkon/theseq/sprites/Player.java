@@ -33,8 +33,8 @@ public class Player extends Citizen {
 	
 	public Player(int x, int y, Village v, int i){
 		super(x, y, v, i);
-		//moveSpeed = 0.125f/2;
-		moveSpeed = 0.25f;
+		moveSpeed = 0.125f/2;
+		//moveSpeed = 0.25f;
 	}
 	
 	@Override

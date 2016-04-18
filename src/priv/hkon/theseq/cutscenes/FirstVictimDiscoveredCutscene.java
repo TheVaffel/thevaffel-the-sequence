@@ -216,7 +216,6 @@ public class FirstVictimDiscoveredCutscene extends Cutscene {
 	
 	public void close(){
 		super.close();
-		//TODO
 		
 		core.village.setNextDayMood(Village.MOOD_MURDER_IN_FOREST);
 		core.village.setNextPublicSentence(new String[] {"You should check out house " + core.village.getHouseNum(nextTalkToVillager),
@@ -238,7 +237,7 @@ public class FirstVictimDiscoveredCutscene extends Cutscene {
 			}
 		});
 		
-		v.setPosition(v.getHome().getX() + v.getHome().getW()/2, v.getHome().getY() + v.getHome().getH()/2);
+		core.village.moveSpriteTo(v, v.getHome().getX() + v.getHome().getW()/2, v.getHome().getY() + v.getHome().getH()/2);
 		
 		dc.isPartOfCutscene = false;
 		pl.isPartOfCutscene = false;

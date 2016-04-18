@@ -223,10 +223,12 @@ public class HistoryOfVictim1Cutscene extends Cutscene {
 			}
 		}){
 			public void happen(){
+				core.stopWavSound();
 				dummyNob2.addAndShowSentence(new String[] {
 					"",
 					"I love you"
 				});
+				
 				saidIt = true;
 			}
 		});
@@ -237,6 +239,7 @@ public class HistoryOfVictim1Cutscene extends Cutscene {
 			}
 		}){
 			public void happen(){
+				core.playWavSound(Core.WAV_LOVE_THEME);
 				dummyNob1.turnTowards(Movable.RIGHT);
 				dummyNob2.turnTowards(Movable.LEFT);
 				core.village.addAndShowSubtitles(new String[]{
@@ -287,6 +290,7 @@ public class HistoryOfVictim1Cutscene extends Cutscene {
 					"Er couldn't anymore",
 					"Just couldn't"
 				});
+				core.stopWavSound();
 			}
 		});
 		
@@ -296,6 +300,7 @@ public class HistoryOfVictim1Cutscene extends Cutscene {
 			}
 		}){
 			public void happen(){
+				
 				core.village.setSpriteAt(null, dummyNob2.getX(), dummyNob2.getY() - 50);
 				dummyNob2.startPathTo(dummyNob2.getX(), dummyNob2.getY() - 50);
 			}
@@ -409,10 +414,12 @@ public class HistoryOfVictim1Cutscene extends Cutscene {
 		if(tickCount >= fadeOut2 + 120 && tickCount < inAgain){
 			if(tickCount == fadeOut2 + 120){
 				core.setCutsceneFilter(new CombinedFilter(sf, df));
+				
 			}
 			df.darkness = Math.min(255, tickCount - fadeOut2 - 120);
 			if(tickCount > fadeOut2 + 120 + 300){
 				tickCount = inAgain;
+				
 			}
 		}else
 		
@@ -428,15 +435,18 @@ public class HistoryOfVictim1Cutscene extends Cutscene {
 		
 		if(tickCount == fadeOut3 - 29){
 			core.setCutsceneFilter(rsf);
+			core.playWavSound(Core.WAV_NOISE);
 		}else
 		
 		if(tickCount > fadeOut3 && tickCount < backToStart){
 			if(tickCount == fadeOut3 + 1){
 				core.setCutsceneFilter(new CombinedFilter(sf, df));
+				core.stopWavSound();
 			}
 			df.darkness = Math.min(tickCount - fadeOut3, 255);
 			if(tickCount > fadeOut3 + 300){
 				tickCount = backToStart;
+				
 			}
 		}else
 		

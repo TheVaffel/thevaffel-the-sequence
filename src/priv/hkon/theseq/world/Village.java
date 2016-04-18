@@ -9,6 +9,7 @@ import java.util.Random;
 import priv.hkon.theseq.blocks.Tree;
 import priv.hkon.theseq.blocks.Wall;
 import priv.hkon.theseq.cutscenes.Cutscene;
+import priv.hkon.theseq.cutscenes.OpeningScene;
 import priv.hkon.theseq.cutscenes.WakeUpCutscene;
 import priv.hkon.theseq.cutscenes.WakeUpToShadowCutscene;
 import priv.hkon.theseq.main.Controller;
@@ -54,7 +55,7 @@ public class Village implements Serializable{
 	
 	Random random;
 	
-	public boolean woodcutterQuestCompleted = true;
+	public boolean woodcutterQuestCompleted = false;
 	public boolean werewolfQuestBegan = false;
 	public boolean painterQuestCompleted = false;
 	
@@ -163,7 +164,6 @@ public class Village implements Serializable{
 		
 		/*int nextTalkToVillager = 2;
 		Villager v = ((Villager)getCitizen(nextTalkToVillager));
-		System.out.println("House number " + getHouseNum(nextTalkToVillager));
 		
 		v.setWaitForEvent(new VillageEvent(core.village, Nobody.EVENT_WAITING_FOR_PLAYER_ENTRANCE){
 			public boolean isHappening(){
@@ -339,11 +339,11 @@ public class Village implements Serializable{
 		
 		int villageri = villagerPermutation[numVillagers-5];
 		player = new Player(/*janitor.getX() + 2, janitor.getY() + 2*/
-				townGrid[6][6].getX() + houseSide/2,
-				townGrid[6][6].getY() + houseSide/2,
+				/*townGrid[6][6].getX() + houseSide/2,
+				townGrid[6][6].getY() + houseSide/2,*/
 				/*villagers[villageri].getX() - 2,
 				villagers[villageri].getY() - 2,*/
-				/*sx + w/2, sy + h/2,*/ this, numVillagers);
+				sx + w/2, sy + h/2, this, numVillagers);
 		citizenList[numVillagers] = player;
 		addSprite(player); 
 		
@@ -353,8 +353,8 @@ public class Village implements Serializable{
 		addSprite(villagers[villagerPermutation[i]]);
 		prophet = ((Prophet)(villagers[villagerPermutation[i]]));
 		
-		//currScene = new OpeningScene(player, p, core);
-		//inCutscene = true;
+		currScene = new OpeningScene(player, p, core);
+		inCutscene = true;
 	}
 	
 	public int[][] getScreenData(int w, int h){

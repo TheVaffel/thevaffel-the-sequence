@@ -76,7 +76,7 @@ public class PlayerFinishedPainterChallengeCutscene extends Cutscene {
 						"You didn't like the teleporting?",
 						"Doesn't make sense?",
 						"Do you think that knowledge truly is",
-						"The single most meaningful in this life?",
+						"The single most meaningful thing in this life?",
 						"Nonono, my friend, I don't think it works like that",
 						"You see, knowledge makes sense, but it never makes meaning",
 						"The meaning is in the art",

@@ -72,7 +72,6 @@ public class Nobody extends Villager {
 		case Nobody.EVENT_WAITING_FOR_PLAYER_ENTRANCE : 
 			{
 			village.setCutscene(new HistoryOfVictim1Cutscene(this, village.getPlayer(), village.getCore()));
-			//System.out.println("Set cutscene");
 			}
 		}
 	}

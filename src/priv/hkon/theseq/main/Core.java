@@ -52,7 +52,7 @@ public class Core implements Runnable{
 	public static final String WAV_SLEEP = "sound/Sleep.WAV";
 	public static final String WAV_MAIN_THEME_DAY = "sound/MainThemeDay.WAV";
 	public static final String WAV_MAIN_THEME_NIGHT = "sound/MainThemeNight.WAV";
-	
+	public static final String WAV_LOVE_THEME = "sound/LoveTheme.WAV";
 	Clip currClip = null;
 	Sequencer seq = null;
 	
