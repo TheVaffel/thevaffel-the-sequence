@@ -17,7 +17,6 @@ import priv.hkon.theseq.main.Core;
 import priv.hkon.theseq.main.Screen;
 import priv.hkon.theseq.misc.DialogBubble;
 import priv.hkon.theseq.misc.Sentence;
-import priv.hkon.theseq.misc.VillageEvent;
 import priv.hkon.theseq.nonblocks.Door;
 import priv.hkon.theseq.nonblocks.Flowers;
 import priv.hkon.theseq.nonblocks.NonBlock;

@@ -339,7 +339,7 @@ public class Core implements Runnable{
 	}
 	
 	public void stopWavSound(){
-		if(currClip != null){
+		if(currClip != null && currClip.isRunning()){
 			currClip.stop();
 			currClip.close();
 		}

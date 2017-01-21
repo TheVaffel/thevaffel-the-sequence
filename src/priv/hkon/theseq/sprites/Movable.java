@@ -407,6 +407,7 @@ public abstract class Movable extends TalkativeSprite implements Runnable{
 	
 	public void die(){
 		dead = true;
+		moving = false;
 	}
 	
 	public void setPosition(int nx, int ny){
