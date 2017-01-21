@@ -38,6 +38,7 @@ public class PlayerTriesCompleteWoodcutterRequest extends Cutscene {
 				core.village.timesSeenShadow++;
 				shadow.setX(woodcutter.cabin.getX() + woodcutter.cabin.getW()/2);
 				shadow.setY(woodcutter.cabin.getY() + woodcutter.cabin.getH()/2);
+				shadow.turnTowards(Movable.DOWN);
 				core.village.setSpriteAt(shadow, woodcutter.cabin.getX() + woodcutter.cabin.getW()/2,
 						woodcutter.cabin.getY() + woodcutter.cabin.getH()/2);
 				happenings.add(new Happening(player, 2*60){

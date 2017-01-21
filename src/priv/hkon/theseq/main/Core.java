@@ -293,9 +293,7 @@ public class Core implements Runnable{
 	}
 	
 	public void playWavSound(String str){
-		if(currClip != null && currClip.isRunning()){
-			currClip.stop();
-		}
+		stopWavSound();
 		try{
 			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(
 				    new File(str));
@@ -316,9 +314,7 @@ public class Core implements Runnable{
 	}
 	
 	public void playWavSoundDampened(String str){
-		if(currClip != null && currClip.isRunning()){
-			currClip.stop();
-		}
+		stopWavSound();
 		try{
 			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(
 				    new File(str));
@@ -346,7 +342,7 @@ public class Core implements Runnable{
 	}
 	
 	public boolean wavIsPlaying(){
-		return currClip.isActive();
+		return currClip.isRunning();
 	}
 	
 	public Screen getScreen(){
