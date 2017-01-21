@@ -12,9 +12,11 @@ import java.io.ObjectOutputStream;
 
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.Sequencer;
+import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.DataLine;
 import javax.sound.sampled.FloatControl;
 
 import priv.hkon.theseq.filters.CombinedFilter;
@@ -291,14 +293,16 @@ public class Core implements Runnable{
 	}
 	
 	public void playWavSound(String str){
-		if(currClip != null){
+		if(currClip != null && currClip.isRunning()){
 			currClip.stop();
 		}
 		try{
 			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(
 				    new File(str));
-		    
-		    currClip = AudioSystem.getClip();
+			AudioFormat audioFormat = audioInputStream.getFormat();
+			DataLine.Info info = new DataLine.Info(Clip.class, audioFormat);
+			
+		    currClip = (Clip)AudioSystem.getLine(info);
 		    currClip.open(audioInputStream);
 		    //FloatControl gainControl = 
 		        //(FloatControl) currClip.getControl(FloatControl.Type.MASTER_GAIN);
@@ -312,18 +316,20 @@ public class Core implements Runnable{
 	}
 	
 	public void playWavSoundDampened(String str){
-		if(currClip != null){
+		if(currClip != null && currClip.isRunning()){
 			currClip.stop();
 		}
 		try{
 			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(
 				    new File(str));
-		    
-		    currClip = AudioSystem.getClip();
+			AudioFormat audioFormat = audioInputStream.getFormat();
+			DataLine.Info info = new DataLine.Info(Clip.class, audioFormat);
+			
+		    currClip = (Clip)AudioSystem.getLine(info);
 		    currClip.open(audioInputStream);
-		    FloatControl gainControl = 
+		    /*FloatControl gainControl = 
 		        (FloatControl) currClip.getControl(FloatControl.Type.MASTER_GAIN);
-		    gainControl.setValue(-20.0f); 
+		    gainControl.setValue(-20.0f);*/ 
 		    currClip.start();
 		 
 		}catch(Exception e){
